@@ -13,6 +13,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Routing\ResourceRegistrar;
 use Illuminate\Routing\Route;
+use Illuminate\Routing\RouteAttributes;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Routing\RouteGroup;
 use Illuminate\Routing\Router;
@@ -788,26 +789,26 @@ class RoutingRouteTest extends TestCase
         $this->assertEquals('TAYLOR', $router->dispatch(Request::create('foo/taylor', 'GET'))->getContent());
     }
 
-    public function testGroupMerging()
+    public function testRouteAttributeMerging()
     {
         $old = ['prefix' => 'foo/bar/'];
-        $this->assertEquals(['prefix' => 'foo/bar/baz', 'namespace' => null, 'where' => []], RouteGroup::merge(['prefix' => 'baz'], $old));
+        $this->assertEquals(['prefix' => 'foo/bar/baz', 'namespace' => null, 'where' => []], RouteAttributes::merge(['prefix' => 'baz'], $old));
 
         $old = ['domain' => 'foo'];
-        $this->assertEquals(['domain' => 'baz', 'prefix' => null, 'namespace' => null, 'where' => []], RouteGroup::merge(['domain' => 'baz'], $old));
+        $this->assertEquals(['domain' => 'baz', 'prefix' => null, 'namespace' => null, 'where' => []], RouteAttributes::merge(['domain' => 'baz'], $old));
 
         $old = ['as' => 'foo.'];
-        $this->assertEquals(['as' => 'foo.bar', 'prefix' => null, 'namespace' => null, 'where' => []], RouteGroup::merge(['as' => 'bar'], $old));
+        $this->assertEquals(['as' => 'foo.bar', 'prefix' => null, 'namespace' => null, 'where' => []], RouteAttributes::merge(['as' => 'bar'], $old));
 
         $old = ['where' => ['var1' => 'foo', 'var2' => 'bar']];
         $this->assertEquals(['prefix' => null, 'namespace' => null, 'where' => [
             'var1' => 'foo', 'var2' => 'baz', 'var3' => 'qux',
-        ]], RouteGroup::merge(['where' => ['var2' => 'baz', 'var3' => 'qux']], $old));
+        ]], RouteAttributes::merge(['where' => ['var2' => 'baz', 'var3' => 'qux']], $old));
 
         $old = [];
         $this->assertEquals(['prefix' => null, 'namespace' => null, 'where' => [
             'var1' => 'foo', 'var2' => 'bar',
-        ]], RouteGroup::merge(['where' => ['var1' => 'foo', 'var2' => 'bar']], $old));
+        ]], RouteAttributes::merge(['where' => ['var1' => 'foo', 'var2' => 'bar']], $old));
     }
 
     public function testRouteGrouping()
@@ -925,11 +926,8 @@ class RoutingRouteTest extends TestCase
                 (new RouteGroup([
                     'prefix' => 'foo',
                     'middleware' => 'boo:foo',
-                    'routes' => (new RouteCollection)->add($bar)
-                ])),
-                (new RouteGroup([
-                    'routes' => (new RouteCollection)->add($baz)
-                ])),
+                ]))->addRoute($bar),
+                (new RouteGroup)->addRoute($baz),
             ],
             $router->getGroups()
         );
