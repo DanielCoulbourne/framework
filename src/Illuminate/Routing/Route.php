@@ -628,7 +628,7 @@ class Route
      */
     protected function addGroupNamespaceToStringUses($action)
     {
-        $groupStack = last($this->router->getGroupStack());
+        $groupStack = $this->router->getGroupAttributes();
 
         if (isset($groupStack['namespace']) && strpos($action, '\\') !== 0) {
             return $groupStack['namespace'].'\\'.$action;

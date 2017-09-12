@@ -822,8 +822,8 @@ class RoutingRouteTest extends TestCase
                 return 'hello';
             });
         });
-        $routes = $router->getRoutes();
-        $routes = $routes->getRoutes();
+        $routes = $router->getRoutes()->getRoutes();
+
         $this->assertEquals('foo', $routes[0]->getPrefix());
     }
 

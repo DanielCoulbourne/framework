@@ -45,7 +45,7 @@ class RouteAttributes
                     : trim($new['namespace'], '\\');
         }
 
-        return isset($old['namespace']) ? $old['namespace'] : null;
+        return $old['namespace'] ?? null;
     }
 
     /**
@@ -57,9 +57,13 @@ class RouteAttributes
      */
     protected static function formatPrefix($new, $old)
     {
-        $old = Arr::get($old, 'prefix');
+        $old = $old['prefix'] ?? null;
+        $old = $old ? trim($old, '/') : '';
 
-        return isset($new['prefix']) ? trim($old, '/').'/'.trim($new['prefix'], '/') : $old;
+        $new = $new['prefix'] ?? null;
+        $new = $new ? trim($new, '/') : '';
+
+        return $old.($old && $new ? '/'.$new : $new);
     }
 
     /**
@@ -72,8 +76,8 @@ class RouteAttributes
     protected static function formatWhere($new, $old)
     {
         return array_merge(
-            isset($old['where']) ? $old['where'] : [],
-            isset($new['where']) ? $new['where'] : []
+            $old['where'] ?? [],
+            $new['where'] ?? []
         );
     }
 
@@ -87,7 +91,7 @@ class RouteAttributes
     protected static function formatAs($new, $old)
     {
         if (isset($old['as'])) {
-            $new['as'] = $old['as'].Arr::get($new, 'as', '');
+            $new['as'] = $old['as'].($new['as'] ?? '');
         }
 
         return $new;

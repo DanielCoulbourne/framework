@@ -334,17 +334,6 @@ class Router implements RegistrarContract, BindingRegistrar
         return RouteAttributes::merge($new, $this->flattenGroupStackAttributes());
     }
 
-    /**
-     * Merge the given array with the last group stack.
-     *
-     * @param  array  $new
-     * @return array
-     */
-    public function mergeWithLastGroup($new)
-    {
-        return RouteAttributes::merge($new, end($this->groupStack));
-    }
-
     public function saveRouteToGroups($route)
     {
         foreach ($this->groupStack as $group) {
@@ -411,12 +400,14 @@ class Router implements RegistrarContract, BindingRegistrar
         // If the route is routing to a controller we will parse the route action into
         // an acceptable array format before registering it and creating this route
         // instance itself. We need to build the Closure that will call this out.
+
         if ($this->actionReferencesController($action)) {
             $action = $this->convertToControllerAction($action);
         }
+        $action = $this->compileAction($action);
 
         $route = $this->newRoute(
-            $methods, $this->prefix($uri), $action
+            $methods, $uri, $action
         );
 
         // If we have groups that need to be merged, we will merge them now after this
@@ -424,7 +415,6 @@ class Router implements RegistrarContract, BindingRegistrar
         // the merge we will be ready to return the route back out to the caller.
         if ($this->hasGroupStack()) {
             $this->saveRouteToGroups($route);
-            $this->mergeGroupAttributesIntoRoute($route);
         }
 
         $this->addWhereClausesToRoute($route);
@@ -482,7 +472,7 @@ class Router implements RegistrarContract, BindingRegistrar
      */
     protected function prependGroupNamespace($class)
     {
-        $attributes = end($this->attributes);
+        $attributes = $this->flattenGroupStackAttributes();
 
         return isset($attributes['namespace']) && strpos($class, '\\') !== 0
                 ? $attributes['namespace'].'\\'.$class : $class;
@@ -535,9 +525,17 @@ class Router implements RegistrarContract, BindingRegistrar
      * @param  \Illuminate\Routing\Route  $route
      * @return void
      */
-    protected function mergeGroupAttributesIntoRoute($route)
+    protected function compileAction($action)
     {
-        $route->setAction($this->mergeWithFlatStack($route->getAction()));
+        if ($action instanceof Closure) {
+            $action = ['uses' => $action];
+        }
+
+        if ($action === null) {
+            return null;
+        }
+        
+        return $this->mergeWithFlatStack($action);
     }
 
     /**
@@ -918,6 +916,16 @@ class Router implements RegistrarContract, BindingRegistrar
     public function getGroupStack()
     {
         return $this->groupStack;
+    }
+
+    /**
+     * Get the current group stack for the router.
+     *
+     * @return array
+     */
+    public function getGroupAttributes()
+    {
+        return $this->flattenGroupStackAttributes();
     }
 
     /**
